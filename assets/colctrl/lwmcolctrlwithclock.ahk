@@ -40,6 +40,8 @@ Persistent(true)
 ;@Ahk2Exe-AddResource btn_rect_90_narrow.png
 ;@Ahk2Exe-AddResource btn_rect_fullscreen_narrow.png
 ;@Ahk2Exe-AddResource btn_arrow_to_horizontal_narrow.png
+;@Ahk2Exe-AddResource btn_arrow_layout_compact.png
+;@Ahk2Exe-AddResource btn_arrow_layout_sq_compact.png
 ;@Ahk2Exe-AddResource btn_rect_30_compact.png
 ;@Ahk2Exe-AddResource btn_rect_39_compact.png
 ;@Ahk2Exe-AddResource btn_rect_50_compact.png
@@ -337,42 +339,37 @@ InitColCtrl() {
 
     colctrl.SetFont("s8 Norm cDCDCDC", "Segoe UI")
 
-    ; Compact button dimensions
-    btnW := colctrlHorizontal ? 50 : 46
+    ; Compact button dimensions (identical for both horizontal and vertical)
+    btnW := 46
     btnH := 26
 
-    fsBtnImg := colctrlHorizontal ? (A_ScriptDir . "\btn_rect_fullscreen_compact.png") : (A_ScriptDir . "\btn_rect_fullscreen_vcompact.png")
+    fsBtnImg := A_ScriptDir . "\btn_rect_fullscreen_compact.png"
+    ltBtnImg := A_ScriptDir . "\btn_arrow_layout_compact.png"
+    ltBtnSqImg := A_ScriptDir . "\btn_arrow_layout_sq_compact.png"
 
-    ; Layout toggle glyphs dynamically reflect the target/current state
-    ; When in Horizontal: show vertical arrow (↕) to switch to Vertical layout
-    ; When in Vertical: show horizontal arrow (↔) to switch to Horizontal layout
-    ltBtnImg := colctrlHorizontal ? (A_ScriptDir . "\btn_arrow_to_vertical_compact.png") : (A_ScriptDir . "\btn_arrow_to_horizontal_vcompact.png")
-
-    ; Helper mapping a preset fraction to an available button image
-    GetPresetBtnImage(val, isHoriz) {
+    ; Helper mapping a preset fraction to an available button image (identical for both layouts)
+    GetPresetBtnImage(val) {
         pct := Round(val * 100)
-        suffix := isHoriz ? "_compact.png" : "_vcompact.png"
-        specific := A_ScriptDir . "\btn_rect_" . pct . suffix
+        specific := A_ScriptDir . "\btn_rect_" . pct . "_compact.png"
         if FileExist(specific)
             return specific
-        ; Try nearest standard framed button if exact pct does not exist
         if (pct <= 34)
-            candidate := A_ScriptDir . "\btn_rect_30" . suffix
+            candidate := A_ScriptDir . "\btn_rect_30_compact.png"
         else if (pct <= 44)
-            candidate := A_ScriptDir . "\btn_rect_39" . suffix
+            candidate := A_ScriptDir . "\btn_rect_39_compact.png"
         else if (pct <= 60)
-            candidate := A_ScriptDir . "\btn_rect_50" . suffix
+            candidate := A_ScriptDir . "\btn_rect_50_compact.png"
         else if (pct <= 80)
-            candidate := A_ScriptDir . "\btn_rect_70" . suffix
+            candidate := A_ScriptDir . "\btn_rect_70_compact.png"
         else
-            candidate := A_ScriptDir . "\btn_rect_90" . suffix
+            candidate := A_ScriptDir . "\btn_rect_90_compact.png"
         return FileExist(candidate) ? candidate : ""
     }
 
     if (colctrlHorizontal) {
         ; --- HORIZONTAL LAYOUT: compact buttons in a row ---
         for idx, p in presets {
-            imgPath := GetPresetBtnImage(p, true)
+            imgPath := GetPresetBtnImage(p)
             posOpt := (idx == 1) ? "xm ym" : "x+4 yp"
 
             if (imgPath != "") {
@@ -393,9 +390,10 @@ InitColCtrl() {
             fsBtn.OnEvent("Click", (*) => ApplyFullscreen())
         }
 
-        ; Layout toggle button (square button, last in row, showing vertical arrow ↕)
-        if FileExist(ltBtnImg) {
-            ltBtn := colctrl.Add("Picture", "x+4 yp w" . btnH . " h" . btnH . " +0x100", ltBtnImg)
+        ; Layout toggle button (square button, last in row)
+        toggleImg := FileExist(ltBtnSqImg) ? ltBtnSqImg : (FileExist(ltBtnImg) ? ltBtnImg : "")
+        if (toggleImg != "") {
+            ltBtn := colctrl.Add("Picture", "x+4 yp w" . btnH . " h" . btnH . " +0x100", toggleImg)
             ltBtn.OnEvent("Click", (*) => ToggleColCtrlLayout())
         } else {
             ltBtn := colctrl.Add("Button", "x+4 yp w" . btnH . " h" . btnH, "↕")
@@ -404,7 +402,7 @@ InitColCtrl() {
     } else {
         ; --- VERTICAL LAYOUT: compact buttons stacked ---
         for idx, p in presets {
-            imgPath := GetPresetBtnImage(p, false)
+            imgPath := GetPresetBtnImage(p)
             posOpt := (idx == 1) ? "xm ym" : "xm y+4"
 
             if (imgPath != "") {
@@ -425,16 +423,12 @@ InitColCtrl() {
             fsBtn.OnEvent("Click", (*) => ApplyFullscreen())
         }
 
-        ; Layout toggle button (bottom of stack, showing horizontal arrow ↔)
+        ; Layout toggle button (bottom of stack)
         if FileExist(ltBtnImg) {
             ltBtn := colctrl.Add("Picture", "xm y+4 w" . btnW . " h" . btnH . " +0x100", ltBtnImg)
             ltBtn.OnEvent("Click", (*) => ToggleColCtrlLayout())
         } else {
             ltBtn := colctrl.Add("Button", "xm y+4 w" . btnW . " h" . btnH, "↔ Layout")
-            ltBtn.OnEvent("Click", (*) => ToggleColCtrlLayout())
-        }
-    }
-            ltBtn := colctrl.Add("Button", "xm y+8 w" . btnW . " h" . btnH, "↔ Layout")
             ltBtn.OnEvent("Click", (*) => ToggleColCtrlLayout())
         }
     }
