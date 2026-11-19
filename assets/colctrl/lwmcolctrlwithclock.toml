@@ -1,0 +1,4 @@
+# Configuration for lwmcolctrlwithclock
+# Width presets for column control (fractions between 0.1 and 1.0)
+[layout]
+width_presets = [0.30, 0.39, 0.50, 0.70, 0.90]
